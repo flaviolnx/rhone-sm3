@@ -1,0 +1,75 @@
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+ name: simplest
+  namespace: tempo
+spec:
+  limits:
+    global:
+      query:
+        maxSearchDuration: 0s
+  managementState: Managed
+  observability:
+    tracing:
+      jaeger_agent_endpoint: localhost:6831
+      otlp_http_endpoint: http://localhost:4320
+  replicationFactor: 1
+  resources:
+    total:
+      limits:
+        cpu: "2"
+        memory: 2Gi
+  retention:
+    global:
+      traces: 48h0m0s
+  search:
+    defaultResultLimit: 20
+    maxDuration: 0s
+  serviceAccount: tempo-simplest
+  storage:
+    secret:
+      name: tempo-secret
+      type: s3
+    tls:
+      enabled: false
+  storageSize: 20Gi
+  template:
+    compactor:
+      replicas: 1
+    distributor:
+      component:
+        replicas: 1
+      tls:
+        enabled: false
+    gateway:
+      component:
+        replicas: 1
+      enabled: true
+      ingress:
+        route:
+          termination: reencrypt
+        type: route
+      rbac:
+        enabled: false
+    ingester:
+      replicas: 1
+    querier:
+      replicas: 1
+    queryFrontend:
+      component:
+        replicas: 1
+      jaegerQuery:
+        enabled: true
+        monitorTab:
+          enabled: false
+          prometheusEndpoint: ""
+        servicesQueryDuration: 72h0m0s
+  tenants:
+    authentication:
+    - tenantId: 1610b0c3-c509-4592-a256-a1871353dbfa
+      tenantName: dev
+    - tenantId: 1610b0c3-c509-4592-a256-a1871353dbfb
+      tenantName: prod
+    mode: openshift
+  timeout: 30s
+

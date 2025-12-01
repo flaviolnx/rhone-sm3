@@ -1,0 +1,36 @@
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+  namespace: istio-system
+spec:
+  deployment:
+    logger:
+      log_level: debug
+    view_only_mode: false
+  external_services:
+    grafana:
+      enabled: false
+    prometheus:
+      auth:
+        type: bearer
+        use_kiali_token: true
+      thanos_proxy:
+        enabled: true
+      url: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091
+    tracing:
+      auth:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+        insecure_skip_verify: true
+        type: bearer
+        use_kiali_token: true
+      enabled: true
+      external_url: https://tempo-simplest-gateway-tempo.apps.rmendesdemoclaro.sandbox2637.opentlc.com/api/traces/v1/dev/search
+      health_check_url: https://tempo-simplest-gateway-tempo.apps.rmendesdemoclaro.sandbox2637.opentlc.com/api/traces/v1/dev/tempo/api/echo
+      internal_url: https://tempo-simplest-gateway-tempo.apps.rmendesdemoclaro.sandbox2637.opentlc.com/api/traces/v1/dev/tempo
+      provider: tempo
+      tempo_config:
+        url_format: jaeger
+      use_grpc: false
+  istio_namespace: istio-system
+  version: default
