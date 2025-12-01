@@ -59,6 +59,7 @@ spec:
 
 10 - configurar control plane (istio resource) para enviar traces para o collector
 
+<code>
   values:
     meshConfig:
       enableTracing: true
@@ -67,7 +68,8 @@ spec:
         opentelemetry:
           port: 4317
           service: otel-collector.istio-system.svc.cluster.local
-          
+</code>          
+
 11 - criar objeto telemetry no namespace do control plane - oc apply -f 08-telemetry.yaml
 
 12 - Instalar cluster observability operator
