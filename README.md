@@ -1,4 +1,4 @@
-----------------ìnicio Instalação Istio------------------------
+<H1>----------------ìnicio Instalação Istio------------------------</H1>
 
 1 - Instalar Operator Service Mesh 3.0
 
@@ -49,10 +49,11 @@ spec:
 
     oc expose svc istio-ingressgateway -n bookinfo
   
- ----------------Final Instalação Istio------------------------
+ <H1>----------------Final Instalação Istio------------------------</H1>
 
  
- ----------------Inicio Observabilidade------------------------
+<H1> ----------------Inicio Observabilidade------------------------</H1>
+ 
 1 - Habilitar Monitoring, core e user workload 
 
 https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/configuring-core-platform-monitoring
