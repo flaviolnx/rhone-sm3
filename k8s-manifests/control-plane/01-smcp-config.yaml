@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+
+---
+# Service Mesh Control Plane (SMCP) configured for OTLP
+apiVersion: maistra.io/v2
+kind: ServiceMeshControlPlane
+metadata:
+  name: basic-smcp
+  namespace: istio-system
+spec:
+  version: v2.5 # Version 3.x uses Maistra v2.5
+  mode: default
+  telemetry:
+    v2:
+      enabled: true
+      tracing:
+        provider: OpenTelemetry
+        openTelemetry:
+          address: opentelemetry-collector.istio-system.svc.cluster.local:4317 
+  addons:
+    jaeger: { install: { storage: { type: None } } } # Disable built-in Jaeger
+    kiali: { enabled: false } # Disable built-in Kiali
+    grafana: { enabled: false } # Disable built-in Grafana
+
+---
+# Namespace for the Bookinfo application
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bookinfo
+  labels:
+    istio-injection: enabled # Enable automatic sidecar injection
+
+---
+# Service Mesh Member Roll (SMMR): Adds 'bookinfo' namespace to the mesh
+apiVersion: maistra.io/v1
+kind: ServiceMeshMemberRoll
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  members:
+    - bookinfo

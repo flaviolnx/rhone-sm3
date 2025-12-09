@@ -1,0 +1,192 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-install-servicemesh-otlp-full
+  namespace: acm-policy-namespace # Namespace where your ACM policies are located
+  annotations:
+    policy.open-cluster-management.io/standards: ""
+    policy.open-cluster-management.io/categories: ""
+    policy.open-cluster-management.io/controls: ""
+spec:
+  remediationAction: enforce # Ensures the operators and the SMCP will be installed
+  severity: high
+  disabled: false
+  policy-templates:
+
+    # 1. istio-system Namespace (where the SMCP will be deployed)
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: config-policy-istio-namespace
+      spec:
+        remediationAction: enforce
+        severity: medium
+        object-templates:
+        - complianceType: musthave
+          object:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              name: istio-system
+    
+    # 2. Service Mesh Operator (SailOperator) Subscription - Updated to stable-3.2
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: config-policy-servicemesh-subscription
+      spec:
+        remediationAction: enforce
+        severity: medium
+        object-templates:
+        - complianceType: musthave
+          object:
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              name: sailoperator # Subscription name as requested
+              namespace: openshift-operators
+            spec:
+              channel: stable-3.2 # <-- ✅ CHANNEL UPDATED to stable-3.2
+              installPlanApproval: Automatic
+              name: servicemeshoperator # Operator name in the Red Hat Marketplace
+              source: redhat-operators
+              sourceNamespace: openshift-marketplace
+
+    # 3. Kiali Operator Subscription
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: config-policy-kiali-subscription
+      spec:
+        remediationAction: enforce
+        severity: medium
+        object-templates:
+        - complianceType: musthave
+          object:
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              name: kiali-operator
+              namespace: openshift-operators
+            spec:
+              channel: stable
+              installPlanApproval: Automatic
+              name: kiali-operator
+              source: redhat-operators
+              sourceNamespace: openshift-marketplace
+
+    # 4. OpenTelemetry Operator Subscription
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: config-policy-opentelemetry-subscription
+      spec:
+        remediationAction: enforce
+        severity: medium
+        object-templates:
+        - complianceType: musthave
+          object:
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              name: opentelemetry-operator
+              namespace: openshift-operators
+            spec:
+              channel: stable
+              installPlanApproval: Automatic
+              name: opentelemetry-operator
+              source: redhat-operators
+              sourceNamespace: openshift-marketplace
+
+    # 5. Grafana Tempo Operator Subscription
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: config-policy-tempo-subscription
+      spec:
+        remediationAction: enforce
+        severity: medium
+        object-templates:
+        - complianceType: musthave
+          object:
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              name: tempo-operator
+              namespace: openshift-operators
+            spec:
+              channel: stable
+              installPlanApproval: Automatic
+              name: tempo-operator # The name might be 'tempo-operator' or 'grafana-tempo-operator'
+              source: redhat-operators
+              sourceNamespace: openshift-marketplace
+
+    # 6. ServiceMeshControlPlane (SMCP) configured for OTLP/Tempo
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: config-policy-servicemesh-otlp
+      spec:
+        remediationAction: enforce
+        severity: medium
+        object-templates:
+        - complianceType: musthave
+          object:
+            apiVersion: maistra.io/v2
+            kind: ServiceMeshControlPlane
+            metadata:
+              name: basic-smcp
+              namespace: istio-system
+            spec:
+              version: v2.5 # Maistra/Istio Version supporting 3.x release
+              mode: default
+              # Disable addons installed by SMCP to use separate operators
+              addons:
+                jaeger:
+                  install:
+                    storage:
+                      type: None 
+                kiali:
+                  enabled: false 
+                grafana:
+                  enabled: false 
+              
+              # Tracing Configuration for OpenTelemetry (OTLP)
+              telemetry:
+                enabled: true
+                v2:
+                  enabled: true
+                  tracing:
+                    provider: OpenTelemetry
+                    openTelemetry:
+                      # ⚠️ Address of the OpenTelemetry Collector which must be running
+                      address: opentelemetry-collector.istio-system.svc.cluster.local:4317 
+                      tlsSettings:
+                        mode: DISABLE
+              
+              policy:
+                enabled: false 
+              type: Istio
+
+---
+# PLACEMENT BINDING: Binds the Policy to your PlacementRule
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: binding-policy-install-servicemesh-otlp-full
+  namespace: acm-policy-namespace # Same namespace as the Policy
+placementRef:
+  name: placement-servicemesh-clusters # Reference to your existing PlacementRule
+  kind: PlacementRule
+  apiGroup: apps.open-cluster-management.io
+subjects:
+- name: policy-install-servicemesh-otlp-full
+  kind: Policy
+  apiGroup: policy.open-cluster-management.io
