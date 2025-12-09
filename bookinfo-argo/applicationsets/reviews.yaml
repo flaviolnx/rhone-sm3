@@ -2,15 +2,13 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: guestbook
-  namespace: argocd
+  namespace: bookinfo
 spec:
   generators:
   - list: 
       # Parameters are generated based on this cluster list, to be substituted
       # into the template below.
      elements:
-     - cluster: stg
-       url: https://kubernetes.default.svc
      - cluster: prod
        url: https://kubernetes.default.svc
   template: 

@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prod-reviews
+  name: bookinfo
   namespace: argocd
   labels:
-    app: reviews
+    app: bookinfo
     environment: prod
 spec:
   destination:
-    namespace: prod
+    namespace: bookinfo
     server: https://kubernetes.default.svc
-  project: prod-bookinfo
+  project: bookinfo
   source:
     kustomize:
     path: deploy/overlays/prod
