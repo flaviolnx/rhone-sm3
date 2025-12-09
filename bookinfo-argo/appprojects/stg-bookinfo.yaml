@@ -14,4 +14,4 @@ spec:
   - group: triggers.tekton.dev
     kind: '*'
   sourceRepos:
-  - https://gitlab.com/___GITLAB_USER___/bookinfo-manifests.git
+  - https://github.com/flaviolnx/bookinfo-argo
