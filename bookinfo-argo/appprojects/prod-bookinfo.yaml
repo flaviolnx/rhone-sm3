@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: prod-bookinfo
+  namespace: argocd
+spec:
+  description: BookInfo for Production Environment
+  destinations:
+  - namespace: prod
+    server: https://kubernetes.default.svc
+  namespaceResourceBlacklist:
+  - group: tekton.dev
+    kind: '*'
+  - group: triggers.tekton.dev
+    kind: '*'
+  sourceRepos:
+  - https://gitlab.com/___GITLAB_USER___/bookinfo-manifests.git

@@ -1,0 +1,48 @@
+apiVersion: policy.open-cluster-management.io/v1beta1
+kind: PolicySet
+metadata:
+  name: ossm-polices
+  namespace: ossm-polices
+spec:
+  description: Polices for Service Mesh 3
+  policies:
+    - install-kiali-ossm-operator
+    - install-opentlemetry-operator
+    - install-tempo-operator
+    - install-service-mesh-3-operator
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: ossm-polices-placement
+  namespace: ossm-polices
+spec:
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+  clusterSets:
+    - prod-cluster
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: environment
+              operator: In
+              values:
+                - prod
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: ossm-polices-placement
+  namespace: ossm-polices
+placementRef:
+  name: ossm-polices-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: ossm-polices
+    apiGroup: policy.open-cluster-management.io
+    kind: PolicySet

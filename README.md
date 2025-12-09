@@ -1,14 +1,14 @@
-<H1>----------------ìnicio Instalação Istio------------------------</H1>
+# Start Istio Installation
 
-1 - Instalar Operator Service Mesh 3.0
+1 - Install Service Mesh Operator 3.0
 
-2 - Criar Projeto istio-system
+2 - Create Project istio-system
 
-3 - Criar Projeto istio-cni
+3 - Create Project istio-cni
 
-3 - Criat Istio CRD com o seguinte spec:
+4 - Create Istio CRD with the following spec:
 
-<code>
+```yaml
 spec:
   namespace: istio-system
   updateStrategy:
@@ -20,75 +20,69 @@ spec:
         - matchLabels:
             istio-discovery: enabled
   version: v1.24.5
-</code>
+```
 
+5 - Create IstioCNI in the istio-cni project
 
-4 - criar IstioCNI no projeto istio-cni
+6 - Create namespace bookinfo oc new-project bookinfo
 
-5 - criar namespace bookinfo
+7 - Add labels to the bookinfo namespace
 
-    oc new-project bookinfo
+`oc label namespace bookinfo istio-discovery=enabled istio-injection=enabled`
 
-6 - adicionar labels ao namespace bookinfo 
+8 - Deploy the bookinfo application
 
-    oc label namespace bookinfo istio-discovery=enabled istio-injection=enabled
+` oc apply -f https://raw.githubusercontent.com/openshift-service-mesh/istio/release-1.24/samples/bookinfo/platform/kube/bookinfo.yaml -n bookinfo`
 
-7 - fazer o deploy da aplicação bookinfo 
- 
-    oc apply -f https://raw.githubusercontent.com/openshift-service-mesh/istio/release-1.24/samples/bookinfo/platform/kube/bookinfo.yaml -n bookinfo
+9 - Create the gateway
 
-8 - criar o gateway 
-  
-    oc apply -n bookinfo -f https://raw.githubusercontent.com/istio-ecosystem/sail-operator/main/chart/samples/ingress-gateway.yaml
+`oc apply -n bookinfo -f https://raw.githubusercontent.com/istio-ecosystem/sail-operator/main/chart/samples/ingress-gateway.yaml`
 
-9 - configurar app bookinfo para usar o gateway 
- 
-    oc apply -f https://raw.githubusercontent.com/openshift-service-mesh/istio/release-1.24/samples/bookinfo/networking/bookinfo-gateway.yaml -n bookinfo
+10 - Configure bookinfo app to use the gateway
 
-10 - expor o serviço do gateway 
+`oc apply -f https://raw.githubusercontent.com/openshift-service-mesh/istio/release-1.24/samples/bookinfo/networking/bookinfo-gateway.yaml -n bookinfo`
 
-    oc expose svc istio-ingressgateway -n bookinfo
-  
- <H1>----------------Final Instalação Istio------------------------</H1>
+11 - Expose the gateway service 
 
- 
-<H1> ----------------Inicio Observabilidade------------------------</H1>
- 
-1 - Habilitar Monitoring, core e user workload 
+`oc expose svc istio-ingressgateway -n bookinfo`
 
-https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/configuring-core-platform-monitoring
+# End Istio Installation
 
-2 - Criar service monitor e pod monitor para o namespace do control plane e todos os namespaces das apps que estarão nas mesh - 
+Start Observability
 
-    oc apply -f 01-control-plane-service-monitor.yaml -n istio-system && oc apply -f 02-control-plane-pod-monitor.yaml -n istio-system
+1 - Enable Monitoring, core and user workload [https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/configuring-core-platform-monitoring]()
 
-3 - Instalar o Operador do GrafanaTempo
+2 - Create service monitor and pod monitor for the control plane namespace and all app namespaces that will be in the mesh
 
-4 - Instalar o Operador do OpenTelemetry
+`oc apply -f 01-control-plane-service-monitor.yaml -n istio-system && oc apply -f 02-control-plane-pod-monitor.yaml -n istio-system`
 
-5 - Criar o secret tempo-secret - 
+3 - Install the Grafana Tempo Operator
 
-    oc apply -f 03-tempo-s3-secret.yaml -n tempo
+4 - Install the OpenTelemetry Operator
 
-6 - Criar Service Account otel-colector-deployment no namespace istio-system 
+5 - Create the tempo-secret secret
 
-    oc create sa otel-collector-deployment
+`oc apply -f 03-tempo-s3-secret.yaml -n tempo`
 
-7 - aplicar cluster role e clusterrolebinding para a service account 
+6 - Create Service Account otel-collector-deployment in the istio-system namespace
 
-    oc apply -f 04-otel-collector-cluster-role.yaml && oc apply -f 05-otel-collector-cluster-role-binding.yaml -n istio-system
+ `oc create sa otel-collector-deploymen`t
 
-8 - Instalar o tempo stack 
+7 - Apply cluster role and clusterrolebinding for the service account
 
-    oc apply -f 06-tempo-stack.yaml
+`oc apply -f 04-otel-collector-cluster-role.yaml && oc apply -f 05-otel-collector-cluster-role-binding.yaml -n istio-system`
 
-9 - Instalar OpenTelemetry Collector 
-  
-    oc apply -f 07-otel-istio.yaml
+8 - Install the tempo stack
 
-10 - configurar control plane (istio resource) para enviar traces para o collector
+`oc apply -f 06-tempo-stack.yaml`
 
-<code>
+9 - Install OpenTelemetry Collector
+
+`oc apply -f 07-otel-istio.yaml`
+
+10 - Configure control plane (Istio resource) to send traces to the collector
+
+```yaml
   values:
     meshConfig:
       enableTracing: true
@@ -97,32 +91,32 @@ https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/
         opentelemetry:
           port: 4317
           service: otel-collector.istio-system.svc.cluster.local
-</code>          
+```
 
-11 - criar objeto telemetry no namespace do control plane 
-    
-    oc apply -f 08-telemetry.yaml
+11 - Create telemetry object in the control plane namespace
 
-12 - Instalar cluster observability operator
+`oc apply -f 08-telemetry.yaml`
 
-13 - Criar distributed-tracing ui plugin
+12 - Install cluster observability operator
 
-14 - Criar service monitor/podmonitor no namespace da aplicação(criar isso no namespace de todas as aplicações que fizerem parte da mesh, sem isso o Kiali não gera o gráfico de tráfego) 
+13 - Create distributed-tracing ui plugin
 
-15 - gerar carga para a aplicação book info
+14 - Create service monitor/pod monitor in the application namespace (create this in the namespace of all applications that are part of the mesh, without it, Kiali will not generate the traffic graph)
 
-16 - verificar os traces na url interna do openshift
+15 - Generate load for the book info application
 
-17 - Instalar operator do kiali
+16 - Check the traces at the openshift internal URL
 
-18 - configurar cluster role binding de cluster-monitoring-view para o kiali
+17 - Install Kiali operator
 
-    oc apply -f 09-kiali-cluster-role-binding.yaml
+18 - Configure cluster role binding of cluster-monitoring-view for kiali
 
-19 - Instalar o kiali - 
+`oc apply -f 09-kiali-cluster-role-binding.yaml`
 
-    oc apply -f 10-kiali.yaml
+19 - Install Kiali
 
-20 - gerar tráfego para aplicação
+oc apply -f 10-kiali.yaml
 
-21 - observar no kiali
+20 - Generate traffic for the application
+
+21 - Observe in Kiali

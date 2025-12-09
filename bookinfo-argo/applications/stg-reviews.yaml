@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stg-reviews
+  namespace: argocd
+  labels:
+    app: reviews
+    environment: stg
+spec:
+  destination:
+    namespace: stg
+    server: https://kubernetes.default.svc
+  project: stg-bookinfo
+  source:
+    kustomize:
+    path: deploy/overlays/stg
+    repoURL: https://gitlab.com/___GITLAB_USER___/bookinfo-manifests.git
+    targetRevision: stg
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true 
+      - CreateNamespace=true
