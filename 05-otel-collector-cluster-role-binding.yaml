@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: otel-collector-deployment
-  namespace: otel-collector-example
+  namespace: istio-system
 roleRef:
   kind: ClusterRole
   name: otel-collector
