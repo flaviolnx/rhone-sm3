@@ -1,0 +1,17 @@
+apiVersion: sailoperator.io/v1
+kind: Istio
+metadata:
+  name: default
+spec:
+  namespace: istio-system
+  updateStrategy:
+    type: InPlace
+  values:
+    global:
+      externalIstiod: true
+      meshID: mesh1
+      multiCluster:
+        clusterName: cluster1
+      network: network1
+  version: v1.24.3
+
